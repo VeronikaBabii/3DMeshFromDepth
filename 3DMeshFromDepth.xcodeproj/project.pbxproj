@@ -74,6 +74,8 @@
 				944A5763283297CD002C232B /* BridgingHeader.h */,
 				944A5756283295FB002C232B /* Coordinator */,
 				944A5753283295D4002C232B /* Presentation */,
+				94AA7FE22834DDD5005F7AB7 /* Models */,
+				CF72B00928A1158800059593 /* Services */,
 				944A5754283295E4002C232B /* Shaders */,
 				944A5755283295F1002C232B /* Helpers */,
 				944A57422832947A002C232B /* Assets.xcassets */,
@@ -94,11 +96,8 @@
 		944A5754283295E4002C232B /* Shaders */ = {
 			isa = PBXGroup;
 			children = (
-				944A5751283295C6002C232B /* ScanRenderer.swift */,
 				944A575C283296A3002C232B /* Shaders.metal */,
 				944A575E283296CF002C232B /* ShaderTypes.h */,
-				944A576428329929002C232B /* ScanMTLBuffer.swift */,
-				94AA7FE22834DDD5005F7AB7 /* Models */,
 			);
 			path = Shaders;
 			sourceTree = "<group>";
@@ -106,6 +105,7 @@
 		944A5755283295F1002C232B /* Helpers */ = {
 			isa = PBXGroup;
 			children = (
+				944A576428329929002C232B /* ScanMTLBuffer.swift */,
 				944A575F2832971F002C232B /* PlyMesh.swift */,
 				944A576128329788002C232B /* PointCPU.swift */,
 				944A575728329610002C232B /* Extensions */,
@@ -135,6 +135,14 @@
 				94AA7FE32834DDE3005F7AB7 /* Texture.swift */,
 			);
 			path = Models;
+			sourceTree = "<group>";
+		};
+		CF72B00928A1158800059593 /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				944A5751283295C6002C232B /* ScanRenderer.swift */,
+			);
+			path = Services;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
