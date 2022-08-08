@@ -18,9 +18,9 @@ class ScanRenderer {
     var pointsCount = 0
     private let maxPointsInCloud = 20_000_000
     
-    var numGridSamplePoints = 2_000
+    var numGridSamplePoints = 196_608
     
-    private let pointSizeInPixels: Float = 8
+    private let pointSizeInPixels: Float = 1
     
     private let deviceOrientation = UIInterfaceOrientation.portrait
     

@@ -10,6 +10,9 @@ import Foundation
 class PlyMesh {
     
     static func writeToFile(pointsCpuBuffer: inout [PointCPU], pointsCount: Int) throws {
+        
+        PointsSaver.shared.save(text: "pointsCpuBuffer: \(pointsCpuBuffer.map { $0.position })", withFileName: "points.txt")
+        
         let fileName = "scan"
         
         let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
