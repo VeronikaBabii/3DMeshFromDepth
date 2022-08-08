@@ -47,8 +47,7 @@ vertex void unprojectVertex(uint vertexID [[vertex_id]],
                             constant float2 *gridPoints [[buffer(gridPoints)]],
                             texture2d<float, access::sample> capturedImageTextureY [[texture(textureY)]],
                             texture2d<float, access::sample> capturedImageTextureCbCr [[texture(textureCbCr)]],
-                            texture2d<float, access::sample> depthTexture [[texture(textureDepth)]],
-                            texture2d<unsigned int, access::sample> confidenceTexture [[texture(textureConfidence)]]) {
+                            texture2d<float, access::sample> depthTexture [[texture(textureDepth)]]) {
     
     const auto gridPoint = gridPoints[vertexID];
     const auto currentPointIndex = (uniforms.pointCloudCurrentIndex + vertexID) % uniforms.maxPoints;
@@ -61,13 +60,10 @@ vertex void unprojectVertex(uint vertexID [[vertex_id]],
     // Sample Y and CbCr textures to get the YCbCr color at the given texture coordinate
     const auto ycbcr = float4(capturedImageTextureY.sample(colorSampler, texCoord).r, capturedImageTextureCbCr.sample(colorSampler, texCoord.xy).rg, 1);
     const auto sampledColor = (yCbCrToRGB * ycbcr).rgb;
-    // Sample the confidence map to get the confidence value
-    const auto confidence = confidenceTexture.sample(colorSampler, texCoord).r;
     
     // Write the data to the buffer
     pointUniforms[currentPointIndex].position = position.xyz;
     pointUniforms[currentPointIndex].color = sampledColor;
-    pointUniforms[currentPointIndex].confidence = confidence;
 }
 
 vertex RGBVertexOut rgbVertex(uint vertexID [[vertex_id]],
@@ -102,9 +98,7 @@ vertex PointVertexOut pointVertex(uint vertexID [[vertex_id]],
     // Get point data.
     const auto pointData = pointUniforms[vertexID];
     const auto position = pointData.position;
-    const auto confidence = pointData.confidence;
     const auto sampledColor = pointData.color;
-    const auto visibility = confidence >= uniforms.confidenceThreshold;
     
     // Animate and project the point.
     float4 projectedPosition = uniforms.viewProjectionMatrix * float4(position, 1.0);
@@ -115,7 +109,7 @@ vertex PointVertexOut pointVertex(uint vertexID [[vertex_id]],
     PointVertexOut out;
     out.position = projectedPosition;
     out.pointSize = pointSize;
-    out.color = float4(sampledColor, visibility);
+    out.color = float4(sampledColor, 2);
     
     return out;
 }

@@ -15,7 +15,7 @@ class ScanRenderer {
     private var pointsCpuBuffer = [PointCPU]()
     var isSavingFile = false
     
-    var highConfidencePointsCount = 0
+    var pointsCount = 0
     private let maxPointsInCloud = 20_000_000
     
     var numGridSamplePoints = 2_000
@@ -48,7 +48,6 @@ class ScanRenderer {
     private var capturedImageTextureY: CVMetalTexture?
     private var capturedImageTextureCbCr: CVMetalTexture?
     private var depthTexture: CVMetalTexture?
-    private var confidenceTexture: CVMetalTexture?
     
     private var currentBufferIndex = 0
     
@@ -70,7 +69,6 @@ class ScanRenderer {
     private lazy var pointCloudUniformsBuffer: PointCloudUniforms = {
         var uniforms = PointCloudUniforms()
         uniforms.maxPoints = Int32(self.maxPointsInCloud)
-        uniforms.confidenceThreshold = Int32(self.confidenceThreshold)
         uniforms.pointSize = self.pointSizeInPixels
         uniforms.cameraResolution = self.cameraResolution
         return uniforms
@@ -80,8 +78,6 @@ class ScanRenderer {
     private var pointsBuffer: ScanMTLBuffer<PointUniforms>
     private var currentPointIndex = 0
     private var currentPointCount = 0
-    
-    var confidenceThreshold = 2
     
     private var sampleFrame: ARFrame { self.session.currentFrame! }
     private lazy var cameraResolution = Float2(Float(self.sampleFrame.camera.imageResolution.width), Float(self.sampleFrame.camera.imageResolution.height))
@@ -133,13 +129,22 @@ class ScanRenderer {
     }
     
     private func updateDepthTextures(frame: ARFrame) -> Bool {
-        guard let depthMap = frame.smoothedSceneDepth?.depthMap,
-              let confidenceMap = frame.smoothedSceneDepth?.confidenceMap else {
+        if (frame.capturedDepthData != nil) {
+            let capturedFrame = frame
+            return self.captureImages(frame: capturedFrame)
+        } else {
+            print("capturedDepthData is not supported")
+            return false
+        }
+    }
+    
+    func captureImages(frame: ARFrame) -> Bool {
+        guard let depthMap = frame.capturedDepthData?.depthDataMap else {
+            print("Error getting depthMap")
             return false
         }
         
         self.depthTexture = self.makeTexture(from: depthMap, with: .r32Float, at: 0)
-        self.confidenceTexture = self.makeTexture(from: confidenceMap, with: .r8Uint, at: 0)
         
         return true
     }
@@ -213,7 +218,7 @@ class ScanRenderer {
     private func accumulatePoints(frame: ARFrame, commandBuffer: MTLCommandBuffer, renderEncoder: MTLRenderCommandEncoder) {
         self.pointCloudUniformsBuffer.pointCloudCurrentIndex = Int32(self.currentPointIndex)
         
-        var retainingTextures = [self.capturedImageTextureY, self.capturedImageTextureCbCr, self.depthTexture, self.confidenceTexture]
+        var retainingTextures = [self.capturedImageTextureY, self.capturedImageTextureCbCr, self.depthTexture]
         
         commandBuffer.addCompletedHandler { buffer in
             retainingTextures.removeAll()
@@ -221,12 +226,10 @@ class ScanRenderer {
             while (i < self.maxPointsInCloud && self.pointsBuffer[i].position != simd_float3(0.0,0.0,0.0)) {
                 let position = self.pointsBuffer[i].position
                 let color = self.pointsBuffer[i].color
-                let confidence = self.pointsBuffer[i].confidence
-                if confidence == 2 { self.highConfidencePointsCount += 1 }
+                self.pointsCount += 1
                 self.pointsCpuBuffer.append(
                     PointCPU(position: position,
-                             color: color,
-                             confidence: confidence))
+                             color: color))
                 i += 1
             }
         }
@@ -239,7 +242,6 @@ class ScanRenderer {
         renderEncoder.setVertexTexture(CVMetalTextureGetTexture(self.capturedImageTextureY!), index: Int(textureY.rawValue))
         renderEncoder.setVertexTexture(CVMetalTextureGetTexture(self.capturedImageTextureCbCr!), index: Int(textureCbCr.rawValue))
         renderEncoder.setVertexTexture(CVMetalTextureGetTexture(self.depthTexture!), index: Int(textureDepth.rawValue))
-        renderEncoder.setVertexTexture(CVMetalTextureGetTexture(self.confidenceTexture!), index: Int(textureConfidence.rawValue))
         renderEncoder.drawPrimitives(type: .point, vertexStart: 0, vertexCount: self.gridSamplePointsBuffer.count)
         
         self.currentPointIndex = (self.currentPointIndex + self.gridSamplePointsBuffer.count) % self.maxPointsInCloud
@@ -262,7 +264,7 @@ extension ScanRenderer {
             
             do {
                 try PlyMesh.writeToFile(pointsCpuBuffer: &self.pointsCpuBuffer,
-                                        highConfidenceCount: self.highConfidencePointsCount)
+                                        pointsCount: self.pointsCount)
                 completion(true)
             } catch { }
             

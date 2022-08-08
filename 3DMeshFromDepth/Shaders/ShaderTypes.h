@@ -39,13 +39,11 @@ struct PointCloudUniforms {
     float pointSize;
     int maxPoints;
     int pointCloudCurrentIndex;
-    int confidenceThreshold;
 };
 
 struct PointUniforms {
     simd_float3 position;
     simd_float3 color;
-    float confidence;
 };
 
 #endif /* ShaderTypes_h */

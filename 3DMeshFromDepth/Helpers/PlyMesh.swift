@@ -9,7 +9,7 @@ import Foundation
 
 class PlyMesh {
     
-    static func writeToFile(pointsCpuBuffer: inout [PointCPU], highConfidenceCount: Int) throws {
+    static func writeToFile(pointsCpuBuffer: inout [PointCPU], pointsCount: Int) throws {
         let fileName = "scan"
         
         let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
@@ -25,7 +25,7 @@ class PlyMesh {
             "ply",
             "comment Created by SceneX (IOS)",
             "format \(format) 1.0",
-            "element vertex \(highConfidenceCount)",
+            "element vertex \(pointsCount)",
             "property float x",
             "property float y",
             "property float z",
@@ -49,7 +49,6 @@ class PlyMesh {
         var data = Data()
         
         for point in pointsCPUBuffer {
-            if point.confidence != 2 { continue }
             
             var x = point.position.x.bitPattern.littleEndian
             data.append(withUnsafePointer(to: &x) {

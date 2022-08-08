@@ -24,22 +24,25 @@ class MainViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        if ARWorldTrackingConfiguration.supportsFrameSemantics(.sceneDepth) {
+        if ARFaceTrackingConfiguration.isSupported {
             self.session.delegate = self
             self.setupMtkView()
             self.setupSaveButton()
             self.setupSpinner()
+        } else {
+            print("ARFaceTrackingConfiguration is not supported")
         }
     }
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        if ARWorldTrackingConfiguration.supportsFrameSemantics(.sceneDepth) {
-            let configuration = ARWorldTrackingConfiguration()
-            configuration.frameSemantics = [.sceneDepth, .smoothedSceneDepth]
-            session.run(configuration)
+        if ARFaceTrackingConfiguration.isSupported {
+            let configuration = ARFaceTrackingConfiguration()
+            session.run(configuration, options: [.resetTracking, .removeExistingAnchors])
             
             UIApplication.shared.isIdleTimerDisabled = true
+        } else {
+            print("ARFaceTrackingConfiguration is not supported")
         }
     }
     
@@ -98,7 +101,7 @@ class MainViewController: UIViewController {
     }
     
     @objc func saveTapped() {
-        print("!! Scan points count:", self.scanRenderer.highConfidencePointsCount)
+        print("!! Scan points count:", self.scanRenderer.pointsCount)
         
         self.spinner.startAnimating()
         
